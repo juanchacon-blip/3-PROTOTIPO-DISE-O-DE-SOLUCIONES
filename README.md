@@ -1,5 +1,15 @@
 # Gestión de Envíos Nacionales
 
+**Desarrollo de Aplicaciones Empresariales · Tercer prototipo 2026B · Universidad de Ibagué**
+Versión 1.0
+
+Integrantes:
+- Juan Esteban Molano Polanco (2220232008)
+- Juan Pablo Chacon (2220232030)
+- Johan Daniel Esterling (2220241033)
+
+Aplicación distribuida maestro-detalle (envío → paquetes) que expone el CRUD mediante **servicios web GraphQL**, guarda los datos en una base de datos **NO relacional (MongoDB)** y es consumida por **dos clientes en tecnologías distintas** (C# de escritorio y HTML/JavaScript web).
+
 ## Modelo maestro-detalle
 
 ```
@@ -29,16 +39,16 @@ Servidor Java (Spring Boot) con base de datos **NO relacional MongoDB** (`envios
 | Query | `envioNacionalPorCodigo(codigo)` | Consulta por código (usada antes de eliminar/actualizar) |
 | Query | `envioNacionalPorCriterios(codigo, origen, destino)` | Consulta un envío por uno o dos criterios |
 | Query | `enviosConPaquetes(envioCodigo)` | **Consulta personalizada maestro-detalle:** todos los datos del envío + código, descripción y peso de cada paquete (filtro opcional por envío) |
-| Mutation | `addEnvioNacional(input)` | Adiciona (devuelve `null` si el código ya existe) |
-| Mutation | `updateEnvioNacional(input)` | Actualiza (devuelve `null` si no existe) |
-| Mutation | `deleteEnvioNacional(codigo)` | Elimina el envío y sus paquetes (devuelve `null` si no existe) |
+| Mutation | `addEnvioNacional(input)` | Adiciona (error si el código ya existe o los datos son inválidos) |
+| Mutation | `updateEnvioNacional(input)` | Actualiza (error si no existe) |
+| Mutation | `deleteEnvioNacional(codigo)` | Elimina el envío y sus paquetes (error si no existe) |
 | Query | `paquetes` | Lista todos los paquetes |
 | Query | `paquetesFiltrados(envioCodigo, descripcion)` | Lista filtrando por uno o dos parámetros |
 | Query | `paquetePorCodigo(codigo)` | Consulta por código (usada antes de eliminar/actualizar) |
 | Query | `paquetePorCriterios(codigo, envioCodigo, descripcion)` | Consulta un paquete por uno o dos criterios |
-| Mutation | `addPaquete(input)` | Adiciona (devuelve `null` si el código existe o el envío no existe) |
-| Mutation | `updatePaquete(input)` | Actualiza (devuelve `null` si no existe) |
-| Mutation | `deletePaquete(codigo)` | Elimina (devuelve `null` si no existe) |
+| Mutation | `addPaquete(input)` | Adiciona (error si el código existe, el envío no existe o los datos son inválidos) |
+| Mutation | `updatePaquete(input)` | Actualiza (error si no existe) |
+| Mutation | `deletePaquete(codigo)` | Elimina (error si no existe) |
 
 `Paquete` incluye `envioOrigen` y `envioDestino`, de modo que *Listar paquetes* muestra todos los atributos del paquete más dos del envío.
 
@@ -83,12 +93,49 @@ Los errores se devuelven como `{"mensaje": "..."}`.
 - **Singleton:** `ServicioEnvioNacional` y `ServicioPaquete` (beans singleton de Spring, servidor), `ServicioGraphQL`, `ServicioRest`, `EnvioNacionalController`, `PaqueteController` y `EnviosSubject` (C#), `ServicioGraphQL`, `ServicioRest`, `EnvioModelo` y `PaqueteModelo` (web).
 - **Observer:** las ventanas Listar (envíos y paquetes) se refrescan cuando se adiciona, actualiza o elimina un envío o un paquete (incluida la cascada al eliminar un envío).
 
-## Cómo ejecutar
+## Base de datos (MongoDB)
 
-0. MongoDB en `localhost:27017` (por ejemplo `docker run -d --name mongo -p 27017:27017 mongo`). Otra URI: variable de entorno `MONGODB_URI`.
-1. Servidor: `cd EnvioServidor && mvn spring-boot:run`
-2. Cliente C#: abrir `EnvioCliente/EnvioCliente.slnx` en Visual Studio y ejecutar.
-3. Cliente web: `cd EnvioClienteWeb && python -m http.server 3000` y abrir http://localhost:3000
+Base `envios_db` con dos colecciones: `envios` (maestro) y `paquetes` (detalle, referencia al envío con `envioCodigo`). Las colecciones se crean solas al guardar el primer dato.
+
+La conexión se define en `EnvioServidor/src/main/resources/application.properties` (propiedad `spring.mongodb.uri`). Se puede sobrescribir con la variable de entorno `MONGODB_URI`. Opciones:
+
+- **MongoDB Atlas (nube, plan gratuito M0):** usar la cadena `mongodb+srv://<usuario>:<clave>@cluster0.qcicux9.mongodb.net/envios_db`. En Atlas, *Network Access* debe permitir la IP desde donde se ejecuta el servidor (`0.0.0.0/0`) y el usuario necesita el rol *Read and write to any database*. Los datos se revisan en *Database → Data Explorer*.
+- **MongoDB local:** `docker run -d --name mongo -p 27017:27017 mongo` y usar `mongodb://localhost:27017/envios_db`.
+
+## Cómo ejecutar (paso a paso)
+
+Orden: base de datos → servidor → clientes.
+
+**1. Servidor (Apache NetBeans o terminal)** — requiere JDK 17+ y Maven.
+- NetBeans: *File → Open Project* → carpeta `EnvioServidor` → clic derecho *Clean and Build* → clic derecho *Run* (clase principal `com.example.envio.EnvioApplication`).
+- Terminal: `cd EnvioServidor && mvn spring-boot:run`
+- Listo cuando la consola muestra `Started EnvioApplication` (puerto 8081). Prueba en http://localhost:8081/graphiql.
+
+**2. Cliente de escritorio (Visual Studio)**
+- Abrir `EnvioCliente/EnvioCliente.slnx` (o `EnvioCliente/EnvioCliente/EnvioCliente.csproj`), restaurar paquetes NuGet, compilar y ejecutar con F5.
+- Menú *Servicio web* para elegir GraphQL (por defecto) o REST.
+
+**3. Cliente web** — debe usar el puerto 3000 (CORS del servidor).
+- `cd EnvioClienteWeb && python -m http.server 3000` (o `npx serve -l 3000`) y abrir http://localhost:3000
+
+Para detener: en NetBeans, botón *Stop* de la ventana Output; en la terminal del cliente web, `Ctrl + C`.
+
+## Cumplimiento de la rúbrica
+
+| Requerimiento | Dónde se cumple |
+|---|---|
+| Servicios web GraphQL | `EnvioServidor/src/main/resources/graphql/schema.graphqls` y controladores `@Controller` |
+| Base de datos NO relacional, dos colecciones, framework | MongoDB + Spring Data (`envios`, `paquetes`) |
+| Dos clientes en lenguaje distinto al servidor | C# WinForms (`EnvioCliente`) y HTML/CSS/JS (`EnvioClienteWeb`) |
+| Una ventana por caso de uso, menú y *Ayuda → Acerca de…* | Ventanas `GUI*` en C#; secciones y menú en el cliente web |
+| Insertar / Eliminar / Actualizar (con búsqueda previa) | `addX`, `deleteX`, `updateX` + `XPorCodigo` |
+| Consulta de un solo objeto por criterios | `envioNacionalPorCriterios`, `paquetePorCriterios` |
+| Listar con parámetro, mínimo dos consultas personalizadas | `enviosNacionalesFiltrados`, `paquetesFiltrados`, `enviosConPaquetes` |
+| Listar Paquete: sus atributos + dos del envío | `envioOrigen` y `envioDestino` |
+| Sin listas en los objetos | `EnvioNacional` no contiene listas; el detalle referencia al maestro por `envioCodigo` |
+| Atributos int, double, String, LocalDateTime y otro | `codigoPostalNacional`/`unidades`, `precio`/`pesoKg`, textos, fechas y `fragil` (boolean) |
+| Obligatorios, opcionales y validaciones | `codigoPostalNacional` y `fragil` opcionales; ver *Validaciones* |
+| Manejo de excepciones con mensajes coherentes | `ServicioException` + `ManejadorErrores` (GraphQL y REST) |
 
 ## Validaciones (en el servidor)
 
