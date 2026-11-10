@@ -1,0 +1,16 @@
+# Java / Maven
+EnvioServidor/target/
+*.class
+*.log
+# C# / Visual Studio
+.vs/
+bin/
+obj/
+packages/
+*.user
+# IDEs / SO
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,76 @@
+type Query {
+    enviosNacionales: [EnvioNacional]
+    enviosNacionalesFiltrados(origen: String, departamentoDestino: String): [EnvioNacional]
+    envioNacionalPorCodigo(codigo: String!): EnvioNacional
+    envioNacionalPorCriterios(codigo: String, origen: String, destino: String): EnvioNacional
+    paquetes: [Paquete]
+    paquetesFiltrados(envioCodigo: String, descripcion: String): [Paquete]
+    paquetePorCodigo(codigo: String!): Paquete
+    paquetePorCriterios(codigo: String, envioCodigo: String, descripcion: String): Paquete
+    "Consulta personalizada maestro-detalle: datos del envio + descripcion y peso de sus paquetes"
+    enviosConPaquetes(envioCodigo: String): [EnvioConPaquete]
+}
+
+type Mutation {
+    addEnvioNacional(input: EnvioNacionalInput!): EnvioNacional
+    updateEnvioNacional(input: EnvioNacionalInput!): EnvioNacional
+    deleteEnvioNacional(codigo: String!): EnvioNacional
+    addPaquete(input: PaqueteInput!): Paquete
+    updatePaquete(input: PaqueteInput!): Paquete
+    deletePaquete(codigo: String!): Paquete
+}
+
+input EnvioNacionalInput {
+    codigo: ID!
+    origen: String!
+    destino: String!
+    precio: Float!
+    fechaSalida: String!
+    departamentoDestino: String!
+    codigoPostalNacional: Int
+}
+
+type EnvioNacional {
+    codigo: ID
+    origen: String
+    destino: String
+    precio: Float
+    fechaSalida: String
+    departamentoDestino: String
+    codigoPostalNacional: Int
+}
+
+input PaqueteInput {
+    codigo: ID!
+    envioCodigo: String!
+    descripcion: String!
+    pesoKg: Float!
+    unidades: Int!
+    fechaRegistro: String!
+    fragil: Boolean
+}
+
+type Paquete {
+    codigo: ID
+    envioCodigo: String
+    descripcion: String
+    pesoKg: Float
+    unidades: Int
+    fechaRegistro: String
+    fragil: Boolean
+    envioOrigen: String
+    envioDestino: String
+}
+
+type EnvioConPaquete {
+    codigo: ID
+    origen: String
+    destino: String
+    precio: Float
+    fechaSalida: String
+    departamentoDestino: String
+    codigoPostalNacional: Int
+    paqueteCodigo: String
+    paqueteDescripcion: String
+    paquetePesoKg: Float
+}

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestión de Envíos Nacionales</title>
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header>
+    <h1>Envíos nacionales</h1>
+    <nav id="menu" aria-label="Menú principal"></nav>
+    <label class="protocolo">Servicio web
+      <select id="protocolo">
+        <option value="GraphQL" selected>GraphQL</option>
+        <option value="REST">REST</option>
+      </select>
+    </label>
+  </header>
+  <main id="contenido"></main>
+  <div id="aviso" role="status" hidden></div>
+  <dialog id="acerca">
+    <h2>Acerca de…</h2>
+    <p>Gestión de Envíos Nacionales<br>Versión 1.0 (cliente web)</p>
+    <p>Integrantes:<br>Juan Esteban Molano Polanco<br>Juan Pablo Chacon<br>Johan Daniel Esterling</p>
+    <button id="cerrar-acerca">Cerrar</button>
+  </dialog>
+  <script src="js/modelo.js"></script>
+  <script src="js/vista.js"></script>
+  <script src="js/controlador.js"></script>
+</body>
+</html>
